@@ -2,6 +2,7 @@ package rpc;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -14,6 +15,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import db.DBConnection;
+import db.DBConnectionFactory;
 import entity.Item;
 import external.TicketMasterAPI;
 
@@ -39,20 +42,24 @@ public class SearchItem extends HttpServlet {
 		// TODO Auto-generated method stub
 		double lat = Double.parseDouble(request.getParameter("lat"));
 		double lon = Double.parseDouble(request.getParameter("lon"));
-		
-		String keyword = request.getParameter("term");
-		
-		TicketMasterAPI tmAPI = new TicketMasterAPI();
-		List<Item> items = tmAPI.search(lat, lon, keyword);
-		JSONArray array = new JSONArray();
-		try { // may occur error so it must try catch
+		// Term can be empty or null.
+		String term = request.getParameter("term");
+
+		DBConnection connection = DBConnectionFactory.getConnection();
+		List<Item> items = connection.searchItems(lat, lon, term);
+ 		connection.close();
+
+		List<JSONObject> list = new ArrayList<>();
+		try {
 			for (Item item : items) {
+				// Add a thin version of item object
 				JSONObject obj = item.toJSONObject();
-				array.put(obj);
+				list.add(obj);
 			}
-		} catch (Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		JSONArray array = new JSONArray(list);
 		RpcHelper.WriteJSONArray(response, array);
 
 	}
