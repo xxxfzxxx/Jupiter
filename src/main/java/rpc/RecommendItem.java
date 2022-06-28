@@ -2,6 +2,7 @@ package rpc;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -12,6 +13,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import algorithm.GeoRecommendation;
+import entity.Item;
 
 /**
  * Servlet implementation class RecommendItem
@@ -32,19 +36,20 @@ public class RecommendItem extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		JSONArray array = new JSONArray();
-		try { // 如果是hashmap，就不能连续put。但是jsonobject可以捏，因为jsonobject.put() 返回this
-			array.put(new JSONObject().put("name", "abcd")
-					.put("address", "San Fransisco")
-					.put("time", "01/01/2017"));
-			array.put(new JSONObject().put("name", "1234")
-					.put("address", "Los Angeles")
-					.put("time", "06/02/2016"));
-		} catch (JSONException e) {
+		String userId = request.getParameter("user_id");
+		double lat = Double.parseDouble(request.getParameter("lat"));
+		double lon = Double.parseDouble(request.getParameter("lon"));
+		GeoRecommendation recommendation = new GeoRecommendation();
+		List<Item> items = recommendation.recommendItems(userId, lat, lon);
+		JSONArray res = new JSONArray();
+		try {
+			for (Item item : items) {
+				res.put(item.toJSONObject());
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		RpcHelper.WriteJSONArray(response, array);
+		RpcHelper.WriteJSONArray(response, res);
 	}
 
 	/**
